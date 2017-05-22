@@ -1,12 +1,17 @@
 <?php
 include 'functions.php';
 page_head("Turtle");
-
-if (isset($_SESSION['loggedUser']) && isset($_GET["id"]))
+if (isset($_SESSION['loggedUser']) && isset($_POST["textAreaCode"]))
+{
+	$_SESSION['project']->name = addslashes($_POST["projectName"]);
+	$_SESSION['project']->code = addslashes($_POST["textAreaCode"]);
+	ulozProjekt($_SESSION['project']);
+}
+else if (isset($_SESSION['loggedUser']) && isset($_GET["id"]))
 {
 	if ($_GET["id"] == "new")
 	{
-		$_SESSION['project'] = new Project(null, $_SESSION['loggedUser'], "Novy projekt", "", []);
+		$_SESSION['project'] = new Project(null, $_SESSION['loggedUser'], "Novy_projekt", "", []);
 	}
 	else if ($link = db_connect()) {
 		$sql = "SELECT *
@@ -27,14 +32,11 @@ if (isset($_SESSION['loggedUser']) && isset($_GET["id"]))
 	}
 }
 
-if (isset($_SESSION['loggedUser']) && isset($_POST["textAreaCode"]))
-{
-	$_SESSION['project']->name = addslashes($_POST["projectName"]);
-	$_SESSION['project']->code = addslashes($_POST["textAreaCode"]);
-	ulozProjekt($_SESSION['project']);
-}
-
 ?>
+
+<div id="err">
+
+</div>
 
 <form id="formCode" method="post"><textarea name="textAreaCode" id="projectCode" ><?php if (isset($_SESSION['project'])) echo $_SESSION['project']->code; ?></textarea></form>
 <div id="canvasArea">

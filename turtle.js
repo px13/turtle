@@ -1,22 +1,27 @@
 function callPHP(params, url, func = null, args = [])
 {
 	var httpc = new XMLHttpRequest();
-    httpc.open("POST", url, false);
+    httpc.open("POST", url, true);
     httpc.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     httpc.onreadystatechange = function() 
 		{
 			if(httpc.readyState == 4 && httpc.status == 200)
 			{
-				console.log("callPHP response: " + url + httpc.responseText);
+				//console.log("callPHP response: " + url + httpc.responseText);
 				if (func != null)
 				{
-					console.log("\nsom tu\n");
 					args.push(httpc.responseText.trim())
 					func(args);
 				}
 			}
 		}
 	httpc.send(params);  
+}
+
+function err(txt)
+{
+	document.getElementById("err").innerHTML = txt;
+	throw txt;
 }
 
 class Turtle
@@ -63,6 +68,8 @@ class Turtle
 
 }
 
+var imports = [];
+
 class Context
 {
 	constructor(k)
@@ -80,7 +87,6 @@ class Context
 	}
 	poke(code)
 	{
-		console.log(code);
 		this.mem[this.adr] = code;
 		this.adr += 1;
 		return this.adr - 1;
@@ -372,25 +378,19 @@ class Repeat// extends Command
 
 class Import
 {
-	constructor(pr, f)
+	constructor(pr, f, bin)
 	{
 		this.pr = pr;
 		this.f = f;
+		this.bin = bin;
 	}
 	generate()
 	{
 		compiler.globalNamespace[this.f].address = context.adr;
-		callPHP("pr="+this.pr+"&f="+this.f, "ajax.php",
-			function(args)
-			{
-				var pole = args[1].split(',');
-				console.log("quak");
-				for (var i = 0 ; i < pole.length ; i++)
-				{
-					console.log("quik");
-					args[0].poke(parseInt(pole[i]));
-				}
-			}, [context]);
+		for (var i = 0 ; i < this.bin.length ; i++)
+		{
+			context.poke(this.bin[i]);
+		}
 	}
 }
 
@@ -471,6 +471,10 @@ class Call //extends Command
 			this.args[i].generate();
 		}
 		context.poke(INSTRUCTION_CALL);
+		if (this.sub == null)
+		{
+			err("CHYBA - neznama chyba");
+		}
 		context.poke(this.sub.address);
 	}
 }
@@ -797,7 +801,7 @@ class Compiler
 			}
 			else
 			{
-				console.log("CHYBA - neznama premenna");
+				err("CHYBA - neznama premenna");
 			}
 			scan()
 		}
@@ -805,7 +809,10 @@ class Compiler
 		{
 			scan();
 			var result = this.expr();
-			if (token != ')') console.log("CHYBA - zatvorky");
+			if (token != ')')
+			{
+				err("CHYBA - zatvorky");
+			}
 			else
 			{
 				scan();
@@ -813,8 +820,7 @@ class Compiler
 		}
 		else
 		{
-			console.log("CHYBA - cislo alebo nazov premennej" + token);
-			var result = token;//???
+			err("CHYBA - cislo alebo nazov premennej " + token);
 		}
 		return result;
 	}
@@ -1003,7 +1009,10 @@ class Compiler
 					scan();
 				}
 			}
-            //if token != ")": print("CHYBA - neznamy prikaz")
+            if (token != ")")
+			{
+				err("CHYBA - neznamy prikaz");
+			}
             scan();
             result.add(new Call(compiler.globalNamespace[name], args));
 		}
@@ -1036,9 +1045,8 @@ class Compiler
 		}
         else
 		{
-            //print("ddfgdfgd")
-            result = compiler.expr();
-//            #print("CHYBA - nespravny zapis")
+            //result = compiler.expr();
+			err("CHYBA - nespravny zapis");
 		}
 	}
 	compile_define(result)
@@ -1053,7 +1061,10 @@ class Compiler
             var sub = new Subroutine(token);
             compiler.globalNamespace[token] = sub;
             scan();
-            //if token != '(': print('CHYBA - ocakaval som ( parametre')
+            if (token != '(')
+			{
+				err('CHYBA - ocakaval som ( parametre');
+			}
             scan();
             while (last_state == STATE_WORD)
 			{
@@ -1064,14 +1075,23 @@ class Compiler
                     scan();
 				}
 			}
-            //if token != ')': print('CHYBA - ocakaval som )')
+            if (token != ')')
+			{
+				err('CHYBA - ocakaval som )');
+			}
             scan();
-            //if token != '[': print('CHYBA - ocakaval som [ telo podprogramu')
+            if (token != '[')
+			{
+				err('CHYBA - ocakaval som [ telo podprogramu');
+			}
             scan();
             compiler.localNamespace = sub.namespace;
             sub.body = compiler.compile();
             compiler.localNamespace = {};
-            //if token != "]": print('CHYBA - ocakaval som koniec tela podprogramu ]')
+            if (token != "]")
+			{
+				err('CHYBA - ocakaval som koniec tela podprogramu ]');
+			}
             scan();
             //if (type(sub.body.items[-1]) == Return:
                // sub.f = True
@@ -1144,7 +1164,15 @@ class Compiler
 				{
                     scan();
 				}
+				else
+				{
+					err('CHYBA - koniec cyklu ]');
+				}
                 result.add(new Repeat(count, body));
+			}
+			else
+			{
+				err('CHYBA - telo cyklu [');
 			}
 		}
 	}
@@ -1158,10 +1186,16 @@ class Compiler
 		{
             scan();
             var test = compiler.expr();
-            //if token != '[': print('CHYBA - telo cyklu')
+            if (token != '[')
+			{
+				err('CHYBA - telo cyklu [');
+			}
             scan();
             result.add(new While(test, compiler.compile()));
-            //if token != ']': print('CHYBA - koniec cyklu')
+            if (token != ']')
+			{
+				err('CHYBA - koniec cyklu ]');
+			}
             scan();
 		}
 	}
@@ -1175,17 +1209,26 @@ class Compiler
 		{
             scan();
             var test = compiler.expr();
-            //if token != '[': print('CHYBA - telo ifu')
+            if (token != '[')
+			{
+				err('CHYBA - telo ifu [');
+			}
             scan();
             var body = compiler.compile();
-            //if token != ']': print('CHYBA - koniec ifu', token, this.A.vstup.index)
+            if (token != ']')
+			{
+				err('CHYBA - koniec ifu ]', token, this.A.vstup.index);
+			}
             scan();
             if (token == '[')
 			{
                 scan();
                 var elseBody = compiler.compile();
                 result.add(new If(test, body, elseBody));
-                //if token != ']': print('CHYBA - koniec else')
+                if (token != ']')
+				{
+					err('CHYBA - koniec else ]');
+				}
                 scan();
 			}
             else
@@ -1218,7 +1261,7 @@ class Compiler
 	{
         if (token != "import")
 		{
-            this.compile_other(result);
+            compiler.compile_other(result);
 		}
         else
 		{
@@ -1226,9 +1269,11 @@ class Compiler
 			var pr = token;
 			scan();
 			var f = token;
-			compiler.globalNamespace[f] = {address:0};
+			compiler.globalNamespace[f] = {name:f, address:0};
 			scan();
-			result.add(new Import(pr, f));			
+			var imp = new Import(pr, f, []);
+			imports.push(imp)
+			result.add(imp);			
 		}
 	}
 }
@@ -1503,6 +1548,7 @@ class CPU
 		{
             this.execute();
 		}
+		document.getElementById("err").innerHTML = "";
 	}
 }
 
@@ -1517,8 +1563,47 @@ function kresliProjekt(i)
 	next();
 	scan();
 	var program = new Program(compiler.compile());
-	program.generate();
-	//
+	if (imports.length == 0)
+	{
+		program.generate();	
+	}
+	else
+	{
+		handleImport(program, 0);
+	}
+}
+
+function handleImport(program, imp)
+{
+	callPHP("pr="+imports[imp].pr+"&f="+imports[imp].f, "ajax.php",
+			function(args)
+			{
+				if (args[2] != 0)
+				{
+					var pole = args[2].split(',');
+					for (var i = 0 ; i < pole.length ; i++)
+					{
+						args[1].bin.push((parseInt(pole[i])));
+					}
+					if (imp + 1 == imports.length)
+					{
+						program.generate();
+						go();
+					}
+				}
+				else
+				{
+					err("CHYBA - imoport " + args[1].pr + " " + args[1].f);
+				}
+			}, [context, imports[imp]]);
+	if (imp < imports.length - 1)
+	{
+		handleImport(program, imp+1);
+	}
+}
+
+function go()
+{
 	var bin = "";
 	for (var i = 0 ; i < context.adr ; i++)
 	{
@@ -1534,8 +1619,6 @@ function kresliProjekt(i)
 	}
 	fs = fs.substring(0, fs.length - 1);
 	callPHP("bin="+bin+"&fs="+fs,"ajax.php");
-	//
-	console.log(context.mem);
 	cpu.spusti();
 }
 

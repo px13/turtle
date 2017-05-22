@@ -1,13 +1,17 @@
 <?php
 include 'functions.php';
 session_start();
-/*if (!isset($_SESSION['loggedUser']))
+
+if (!isset($_SESSION['loggedUser']))
 {
+	echo 0;
 	die();
-}*/
+}
 
 if (isset($_POST["bin"]) || isset($_POST["fs"]))
 {
+	echo $_POST["bin"];
+	echo $_POST["fs"];
 	$_SESSION['project']->bin = explode(',', $_POST["bin"]);
 	if ($_POST['fs'] == "")
 	{
@@ -23,12 +27,16 @@ if (isset($_POST["bin"]) || isset($_POST["fs"]))
 		$fs[] = $_POST["fs"];
 	}
 	$_SESSION['project']->fs = array();
+	echo "****************************";
+	echo count($_SESSION['project']);
 	for ($i = 0 ; $i < count($fs) ; $i++)
 	{
 		$pom = explode(',', $fs[$i]);
 		$f = new Func(null, $_SESSION['project']->id, $pom[0], array_slice($_SESSION['project']->bin, intval($pom[1]), intval($pom[2])-intval($pom[1])+1));
 		$_SESSION['project']->add_function($f);
 	}
+	echo count($_SESSION['project']);
+	echo "****************************";
 }
 
 else if (isset($_POST["pr"]) || isset($_POST["f"]))

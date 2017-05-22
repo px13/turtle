@@ -144,6 +144,9 @@ function page_head($title)
 		table {
 			margin: 0 auto;
 		}
+		#err {
+			color: red;
+		}
 			
 		</style>
 		
@@ -185,8 +188,8 @@ function echoMessage($key, $info = null){
 }
 function db_connect() {
 	
-    if ($link = @mysqli_connect('localhost', "root", "vertrigo")) {
-        if (@mysqli_select_db($link, "turtle")) {
+    if ($link = @mysqli_connect('localhost', "skturtle", "A653148C61")) {
+        if (@mysqli_select_db($link, "skturtle")) {
             @mysqli_query($link, "SET CHARACTER SET 'utf8'");
             return $link;
         } else {
@@ -243,7 +246,29 @@ function vytvorProjekt($p)
 		}
 		else
 		{
-			echo "chyba";
+			echo "Chyba pri vytvarani projektu.";
+		}
+		
+	}
+	else
+	{
+		echo "err-db-connection-fail";
+	}
+}
+
+function zmazProjekt($id)
+{
+	if ($link = db_connect())
+    {
+		$sql =  "DELETE FROM projects WHERE project_id = ".$id." AND user_id = ".$_SESSION['loggedUser'];
+		$result = mysqli_query($link, $sql);
+		if ($result)
+		{
+			echo "ok";
+		}
+		else
+		{
+			echo "Chyba pri mazani projektu";
 		}
 		
 	}
@@ -294,7 +319,6 @@ function ulozFunkciu($link, $f)
 	{
 		$sql =  "UPDATE functions SET name = '".$f->name."', code2 = '".implode(',', $f->bin)."' WHERE function_id = ".$f->id;
 	}
-	echo $sql;
 	$result = mysqli_query($link, $sql);
 	if ($f->id == null)
 	{

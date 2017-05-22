@@ -188,7 +188,7 @@ function echoMessage($key, $info = null){
 }
 function db_connect() {
 	
-    if ($link = @mysqli_connect('localhost', "skturtle", "A653148C61")) {
+    if ($link = @mysqli_connect('localhost', "skturtle", "***")) {
         if (@mysqli_select_db($link, "skturtle")) {
             @mysqli_query($link, "SET CHARACTER SET 'utf8'");
             return $link;

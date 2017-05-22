@@ -3,9 +3,13 @@ include 'functions.php';
 page_head("Turtle");
 if (isset($_SESSION['loggedUser']) && isset($_POST["textAreaCode"]))
 {
-	$_SESSION['project']->name = addslashes($_POST["projectName"]);
-	$_SESSION['project']->code = addslashes($_POST["textAreaCode"]);
-	ulozProjekt($_SESSION['project']);
+	if (!($_SESSION['project']->name == $_POST["projectName"] && $_SESSION['project']->code == $_POST["textAreaCode"]))
+	{
+		$_SESSION['project']->name = addslashes($_POST["projectName"]);
+		$_SESSION['project']->code = addslashes($_POST["textAreaCode"]);
+		ulozProjekt($_SESSION['project']);
+	}
+	
 }
 else if (isset($_SESSION['loggedUser']) && isset($_GET["id"]))
 {

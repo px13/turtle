@@ -1565,7 +1565,8 @@ function kresliProjekt(i)
 	var program = new Program(compiler.compile());
 	if (imports.length == 0)
 	{
-		program.generate();	
+		program.generate();
+		go();
 	}
 	else
 	{
@@ -1624,7 +1625,7 @@ function go()
 
 function kresli(i)
 {
-	vstup = i;
+	vstup = "begin " + i;
 	index = 0;
 	next();
 	scan();
